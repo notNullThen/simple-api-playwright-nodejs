@@ -1,0 +1,63 @@
+{
+  "name": "simple-api-playwright-nodejs",
+  "version": "1.0.0",
+  "description": "Lightweight API testing framework built on Playwright for Node.js",
+  "author": "Jeno Pekarjuk",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/notNullThen/simple-api-playwright-nodejs.git"
+  },
+  "keywords": [
+    "playwright",
+    "api",
+    "testing",
+    "rest",
+    "http",
+    "automation"
+  ],
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "browser": "dist/browser/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js",
+      "browser": "./dist/browser/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run build:types && npm run build:cjs && npm run build:esm && npm run build:browser",
+    "build:cjs": "esbuild src/index.ts --bundle --platform=node --format=cjs --outdir=dist/cjs --external:playwright",
+    "build:esm": "esbuild src/index.ts --bundle --platform=node --format=esm --outdir=dist/esm --external:playwright",
+    "build:browser": "esbuild src/index.ts --bundle --platform=browser --format=iife --global-name=SimpleAPIPlaywright --outfile=dist/browser/index.js --external:playwright",
+    "build:types": "tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist/types",
+    "docs:generate": "typedoc --out docs src/index.ts",
+    "prepublishOnly": "npm run build && npm run docs:generate",
+    "clean": "rm -rf dist docs"
+  },
+  "peerDependencies": {
+    "playwright": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.20.0",
+    "playwright": "^1.58.0",
+    "typedoc": "^0.25.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

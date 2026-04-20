@@ -1,0 +1,17 @@
+src/
+tests/
+docs/
+.vscode/
+.idea/
+.gitignore
+.github/
+*.log
+npm-debug.log*
+yarn-debug.log*
+.DS_Store
+coverage/
+test-results/
+tsconfig.json
+typedoc.json
+esbuild.js
+eslint.config.mjs

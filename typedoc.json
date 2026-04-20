@@ -1,0 +1,22 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "theme": "default",
+  "excludePrivate": true,
+  "excludeInternal": false,
+  "excludeExternals": true,
+  "excludeProtected": false,
+  "includeVersion": true,
+  "stripInternal": true,
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Classes",
+    "Interfaces",
+    "Type Aliases",
+    "Functions",
+    "Variables"
+  ],
+  "sort": [
+    "source-order"
+  ]
+}
