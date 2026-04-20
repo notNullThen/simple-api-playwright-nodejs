@@ -1,359 +1,121 @@
-# simple-api-playwright-nodejs
+# simple-api-playwright
 
-A lightweight, type-safe API testing framework built on [Playwright](https://playwright.dev/). Provides elegant abstractions for making HTTP requests and intercepting network responses in both API and UI tests.
-
-## Features
-
-- ✨ **Simple API** - Easy-to-use classes for HTTP requests
-- 🎯 **Type-Safe** - Full TypeScript support with generics
-- 🔐 **Bearer Token Support** - Built-in authentication handling
-- 🌐 **Multi-Platform** - Works in Node.js, browser, and CommonJS/ESM environments
-- 📝 **Well Documented** - Comprehensive API documentation with TypeDoc
-- 🎭 **Dual Mode** - Support for both direct API requests and UI-based interception
-- ⚡ **Lightweight** - Minimal dependencies, uses Playwright as peer dependency
+Type-safe API testing with [Playwright](https://playwright.dev/). Request intercepts, type-safe endpoints, and dual-mode support for both API and UI tests.
 
 ## Installation
 
 ```bash
-npm install --save-dev simple-api-playwright-nodejs playwright
+npm install --save-dev simple-api-playwright @playwright/test
 ```
 
-Or with Yarn:
+## Usage
 
-```bash
-yarn add --dev simple-api-playwright-nodejs playwright
-```
-
-## Quick Start
-
-### Basic Usage
+### Basic API Request
 
 ```typescript
-import { APIClient } from 'simple-api-playwright-nodejs';
-import { test } from '@playwright/test';
+import { APIClient } from "simple-api-playwright";
+import { test } from "@playwright/test";
 
-test('Make API request', async ({ request }) => {
-  // Configure default settings
+test("API request", async ({ request }) => {
   APIClient.setInitialConfig({
-    baseURL: 'https://api.example.com',
-    expectedStatusCodes: [200],
-    apiWaitTimeout: 5000
+    baseURL: "https://api.example.com",
   });
 
-  // Create and execute a request
-  const client = new APIClient('https://api.example.com', {
-    url: '/users/1',
-    method: 'GET'
+  const client = new APIClient("https://api.example.com", {
+    url: "/users/1",
+    method: "GET",
   });
 
-  const { response, responseBody } = await client.request(request);
-  console.log(responseBody); // Parsed JSON response
+  const { responseBody } = await client.request(request);
+  console.log(responseBody);
 });
 ```
 
-### Creating Custom Endpoints
-
-Extend `APIEndpointBase` to create a reusable API client for your service:
+### Custom Endpoints
 
 ```typescript
-import { APIEndpointBase } from 'simple-api-playwright-nodejs';
-import { APIContext } from 'simple-api-playwright-nodejs';
+import { APIEndpointBase } from "simple-api-playwright";
 
 interface User {
   id: number;
   name: string;
-  email: string;
 }
 
 class UsersAPI extends APIEndpointBase {
   async getUser(id: number) {
     return this.action<User>({
       url: `/users/${id}`,
-      method: 'GET'
+      method: "GET",
     }).request();
   }
 
-  async getAllUsers() {
-    return this.action<User[]>({
-      url: '/users',
-      method: 'GET'
-    }).request();
-  }
-
-  async createUser(userData: Omit<User, 'id'>) {
+  async createUser(name: string) {
     return this.action<User>({
-      url: '/users',
-      method: 'POST',
-      body: userData
-    }).request();
-  }
-
-  async updateUser(id: number, userData: Partial<User>) {
-    return this.action<User>({
-      url: `/users/${id}`,
-      method: 'PUT',
-      body: userData
-    }).request();
-  }
-
-  async deleteUser(id: number) {
-    return this.action<void>({
-      url: `/users/${id}`,
-      method: 'DELETE',
-      expectedStatusCodes: [204]
+      url: "/users",
+      method: "POST",
+      body: { name },
     }).request();
   }
 }
 
-// Usage in tests
-import { test } from '@playwright/test';
+test("Custom endpoint", async ({ request }) => {
+  const api = new UsersAPI(request);
+  const { responseBody: user } = await api.getUser(1);
+});
+```
 
-test('User API operations', async ({ request }) => {
-  APIClient.setInitialConfig({
-    baseURL: 'https://api.example.com',
-    expectedStatusCodes: [200, 201],
-    apiWaitTimeout: 5000
-  });
+### UI Testing with Request Interception
 
-  const usersAPI = new UsersAPI(request, 'https://api.example.com');
+Intercept network requests triggered by UI actions:
 
-  // Get a user
-  const { response, responseBody: user } = await usersAPI.getUser(1);
-  console.log('User:', user);
+```typescript
+test("Login and verify request", async ({ page }) => {
+  const usersAPI = new UsersAPI(page);
 
-  // Create a user
-  const { responseBody: newUser } = await usersAPI.createUser({
-    name: 'John Doe',
-    email: 'john@example.com'
-  });
+  // Start waiting for the login API response
+  const loginResponseTask = usersAPI.getUser(1).request();
 
-  // Update user
-  await usersAPI.updateUser(newUser.id, { name: 'Jane Doe' });
+  // Trigger the UI action that fires the API call
+  // Wait for both to complete
+  await Promise.all([
+    page.click("button:has-text('Login')"),
+    loginResponseTask,
+  ]);
 
-  // Delete user
-  await usersAPI.deleteUser(newUser.id);
+  const { responseBody: user } = await loginResponseTask;
+  expect(user.id).toBe(1);
 });
 ```
 
 ### Bearer Token Authentication
 
 ```typescript
-import { APIClient } from 'simple-api-playwright-nodejs';
-import { test } from '@playwright/test';
-
-test('Authenticated request', async ({ request }) => {
-  const token = 'your-jwt-token';
-
-  // Set bearer token for the context
-  APIClient.setBearerToken(request, token);
-
-  const client = new APIClient('https://api.example.com', {
-    url: '/protected/resource',
-    method: 'GET'
-  });
-
-  const { response, responseBody } = await client.request(request);
-  console.log(responseBody);
-});
+APIClient.setBearerToken(request, "your-jwt-token");
 ```
 
-### Different HTTP Methods
+## Features
 
-The framework supports all standard HTTP methods:
-
-```typescript
-class ProductsAPI extends APIEndpointBase {
-  // GET
-  async getProduct(id: number) {
-    return this.action<Product>({
-      url: `/products/${id}`,
-      method: 'GET'
-    }).request();
-  }
-
-  // POST
-  async createProduct(data: CreateProductDTO) {
-    return this.action<Product>({
-      url: '/products',
-      method: 'POST',
-      body: data
-    }).request();
-  }
-
-  // PUT (full update)
-  async updateProduct(id: number, data: Product) {
-    return this.action<Product>({
-      url: `/products/${id}`,
-      method: 'PUT',
-      body: data
-    }).request();
-  }
-
-  // PATCH (partial update)
-  async patchProduct(id: number, data: Partial<Product>) {
-    return this.action<Product>({
-      url: `/products/${id}`,
-      method: 'PATCH',
-      body: data
-    }).request();
-  }
-
-  // DELETE
-  async deleteProduct(id: number) {
-    return this.action<void>({
-      url: `/products/${id}`,
-      method: 'DELETE',
-      expectedStatusCodes: [204]
-    }).request();
-  }
-
-  // HEAD
-  async checkProductExists(id: number) {
-    return this.action<void>({
-      url: `/products/${id}`,
-      method: 'HEAD'
-    }).request();
-  }
-}
-```
-
-### UI Testing with Response Interception
-
-Use the `wait()` method to intercept network responses in UI tests:
-
-```typescript
-import { test } from '@playwright/test';
-
-test('UI test with API interception', async ({ page }) => {
-  const usersAPI = new UsersAPI(page, 'https://api.example.com');
-
-  // Navigate to page that triggers API call
-  await page.goto('https://example.com/users');
-
-  // Wait for and validate the API response
-  const { response, responseBody } = await usersAPI.getAllUsers();
-  console.log('Users loaded:', responseBody);
-});
-```
-
-## Configuration
-
-### Global Configuration
-
-Set default configuration for all APIClient instances:
-
-```typescript
-APIClient.setInitialConfig({
-  baseURL: 'https://api.example.com',
-  expectedStatusCodes: [200, 201],
-  apiWaitTimeout: 5000
-});
-```
-
-### Per-Request Configuration
-
-Override settings for individual requests:
-
-```typescript
-const client = new APIClient('https://api.example.com', {
-  url: '/users',
-  method: 'POST',
-  body: { name: 'John' },
-  expectedStatusCodes: [201], // Override global setting
-  apiWaitTimeout: 3000 // Override timeout
-});
-```
+- ✨ Type-safe HTTP requests with TypeScript generics
+- 🎭 Dual-mode: Direct API calls or UI-based request interception  
+- 🔐 Built-in bearer token support
+- ⚡ Minimal dependencies (Playwright peer dependency)
+- 🌐 Works with Node.js, browser, ESM, and CommonJS
 
 ## API Reference
 
-### APIClient
+**APIClient**
+- `setInitialConfig(options)` - Set default base URL and timeouts
+- `setBearerToken(context, token)` - Add bearer token to requests
+- `request<T>(context)` - Execute direct request
+- `wait<T>(context)` - Wait for intercepted request
 
-The core HTTP client for making requests.
-
-**Static Methods:**
-- `setInitialConfig(options)` - Configure default settings
-- `setBearerToken(context, token)` - Set bearer token for a context
-
-**Instance Methods:**
-- `request<T>(context)` - Execute request using APIRequestContext
-- `wait<T>(context)` - Wait for response using Page context
-
-### APIEndpointBase
-
-Abstract base class for creating endpoint implementations.
-
-**Protected Methods:**
-- `action<T>(params)` - Create an action object with `request()` and `wait()` methods
-
-### Types
-
-```typescript
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD' | 'PATCH';
-
-type RequestParameters = {
-  url?: string | null;
-  method: HttpMethod;
-  expectedStatusCodes?: number[];
-  body?: object;
-  apiWaitTimeout?: number;
-};
-
-type APIContext = Page | APIRequestContext;
-```
-
-## Error Handling
-
-The framework validates status codes and throws descriptive errors:
-
-```typescript
-try {
-  const client = new APIClient('https://api.example.com', {
-    url: '/users/999',
-    method: 'GET',
-    expectedStatusCodes: [200]
-  });
-  await client.request(request);
-} catch (error) {
-  // Throws: Expected to return 200, but got 404.
-  // Endpoint: GET /users/999
-}
-```
+**APIEndpointBase**
+- `action<T>(params)` - Define typed API endpoint action
 
 ## Documentation
 
-Generate TypeDoc API documentation:
-
-```bash
-npm run docs:generate
-```
-
-Documentation will be generated in the `docs/` directory.
-
-## Building
-
-Build all targets (CommonJS, ESM, Browser):
-
-```bash
-npm run build
-```
-
-Individual build targets:
-
-```bash
-npm run build:cjs    # CommonJS
-npm run build:esm    # ES Modules
-npm run build:browser # Browser/UMD bundle
-npm run build:types   # Type definitions only
-```
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+For more examples and detailed API docs, see [GitHub](https://github.com/notNullThen/simple-api-playwright-nodejs).
 
 ## License
 
 MIT © 2026 Jeno Pekarjuk
-
-## Support
-
-For issues, questions, or suggestions, please open an issue on [GitHub](https://github.com/notNullThen/simple-api-playwright-nodejs/issues).
