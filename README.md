@@ -73,10 +73,9 @@ test("Login and verify request", async ({ page }) => {
   const usersAPI = new UsersAPI(page);
 
   // Start waiting for the login API response
-  const loginResponseTask = usersAPI.getUser(1).request();
+  const loginResponseTask = usersAPI.getUser(1).wait();
 
-  // Trigger the UI action that fires the API call
-  // Wait for both to complete
+  // Trigger the UI action and wait for both to complete
   await Promise.all([
     page.click("button:has-text('Login')"),
     loginResponseTask,
