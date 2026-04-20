@@ -75,7 +75,9 @@ export default abstract class APIEndpointBase {
        * @returns Promise with response and parsed response body
        */
       request: async () => {
-        return await new APIClient(this.baseURL, params).request<T>(this.context as APIRequestContext);
+        return await new APIClient(this.baseURL, params).request<T>(
+          this.context as APIRequestContext,
+        );
       },
 
       /**
@@ -86,10 +88,14 @@ export default abstract class APIEndpointBase {
       wait: async () => {
         const isPage = "goto" in this.context;
         if (!isPage) {
-          throw new Error("You can use wait() only in the context of UI Tests (context should be of 'Page' type)");
+          throw new Error(
+            "You can use wait() only in the context of UI Tests (context should be of 'Page' type)",
+          );
         }
 
-        return await new APIClient(this.baseURL, params).wait<T>(this.context as Page);
+        return await new APIClient(this.baseURL, params).wait<T>(
+          this.context as Page,
+        );
       },
     };
   }

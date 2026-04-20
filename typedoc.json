@@ -14,7 +14,5 @@
     "Functions",
     "Variables"
   ],
-  "sort": [
-    "source-order"
-  ]
+  "sort": ["source-order"]
 }

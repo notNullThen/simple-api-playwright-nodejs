@@ -1,4 +1,10 @@
-import { APIRequestContext, APIResponse, Page, Response, test } from "@playwright/test";
+import {
+  APIRequestContext,
+  APIResponse,
+  Page,
+  Response,
+  test,
+} from "@playwright/test";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "HEAD" | "PATCH";
 
@@ -44,10 +50,15 @@ export default class APIClient {
     params: RequestParameters,
   ) {
     this.fullURL = this.connectUrlParts(this.apiBaseURL, params.url || "");
-    this.route = this.fullURL.replace(this.connectUrlParts(APIClient.appBaseURL), "");
+    this.route = this.fullURL.replace(
+      this.connectUrlParts(APIClient.appBaseURL),
+      "",
+    );
     this.method = params.method;
-    this.expectedStatusCodes = params.expectedStatusCodes ?? APIClient.initialExpectedStatusCodes;
-    this.apiWaitTimeout = params.apiWaitTimeout ?? APIClient.initialApiWaitTimeout;
+    this.expectedStatusCodes =
+      params.expectedStatusCodes ?? APIClient.initialExpectedStatusCodes;
+    this.apiWaitTimeout =
+      params.apiWaitTimeout ?? APIClient.initialApiWaitTimeout;
     this.body = params.body;
   }
 
@@ -66,7 +77,11 @@ export default class APIClient {
    * Configure default settings for all APIClient instances
    * @param options Configuration object with baseURL, expectedStatusCodes, and apiWaitTimeout
    */
-  public static setInitialConfig(options: { apiWaitTimeout: number; expectedStatusCodes: number[]; baseURL: string }) {
+  public static setInitialConfig(options: {
+    apiWaitTimeout: number;
+    expectedStatusCodes: number[];
+    baseURL: string;
+  }) {
     const { apiWaitTimeout, expectedStatusCodes, baseURL } = options;
     this.initialApiWaitTimeout = apiWaitTimeout;
     this.initialExpectedStatusCodes = expectedStatusCodes;
@@ -88,19 +103,22 @@ export default class APIClient {
    * @returns Object containing the response and parsed response body
    */
   public async request<T>(context: APIRequestContext) {
-    return await this.executeRequest<T>(`Request ${this.method} "${this.route}", expect ${this.expectedStatusCodes.join(", ")}`, async () => {
-      const response: APIResponse = await context.fetch(this.fullURL, {
-        method: this.method,
-        headers: {
-          Authorization: tokenStorage.get(context) || "",
-        },
-        data: this.body,
-        timeout: this.apiWaitTimeout,
-      });
+    return await this.executeRequest<T>(
+      `Request ${this.method} "${this.route}", expect ${this.expectedStatusCodes.join(", ")}`,
+      async () => {
+        const response: APIResponse = await context.fetch(this.fullURL, {
+          method: this.method,
+          headers: {
+            Authorization: tokenStorage.get(context) || "",
+          },
+          data: this.body,
+          timeout: this.apiWaitTimeout,
+        });
 
-      this.validateStatusCode(response.status());
-      return await this.getResponse<T>(response);
-    });
+        this.validateStatusCode(response.status());
+        return await this.getResponse<T>(response);
+      },
+    );
   }
 
   /**
@@ -110,27 +128,35 @@ export default class APIClient {
    * @throws Error if context is not a Page (use this only in UI tests)
    */
   public async wait<T>(context: Page) {
-    return await this.executeRequest<T>(`Wait for ${this.method} "${this.route}" ${this.expectedStatusCodes.join(", ")}`, async () => {
-      const response = await context.waitForResponse(
-        (response: Response) => {
-          // Ignore trailing slash and casing differences
-          const actualUrl = this.normalizeUrl(response.url());
-          const expectedUrl = this.normalizeUrl(this.fullURL);
-          const requestMethod = response.request().method();
+    return await this.executeRequest<T>(
+      `Wait for ${this.method} "${this.route}" ${this.expectedStatusCodes.join(", ")}`,
+      async () => {
+        const response = await context.waitForResponse(
+          (response: Response) => {
+            // Ignore trailing slash and casing differences
+            const actualUrl = this.normalizeUrl(response.url());
+            const expectedUrl = this.normalizeUrl(this.fullURL);
+            const requestMethod = response.request().method();
 
-          if (!actualUrl.toLowerCase().includes(expectedUrl.toLowerCase())) return false;
-          if (requestMethod.toLowerCase() !== this.method.toLowerCase()) return false;
-          return true;
-        },
-        { timeout: this.apiWaitTimeout },
-      );
+            if (!actualUrl.toLowerCase().includes(expectedUrl.toLowerCase()))
+              return false;
+            if (requestMethod.toLowerCase() !== this.method.toLowerCase())
+              return false;
+            return true;
+          },
+          { timeout: this.apiWaitTimeout },
+        );
 
-      this.validateStatusCode(response.status());
-      return await this.getResponse<T>(response);
-    });
+        this.validateStatusCode(response.status());
+        return await this.getResponse<T>(response);
+      },
+    );
   }
 
-  private async executeRequest<T>(name: string, fn: () => Promise<{ response: APIResponse | Response; responseBody: T }>) {
+  private async executeRequest<T>(
+    name: string,
+    fn: () => Promise<{ response: APIResponse | Response; responseBody: T }>,
+  ) {
     return await test.step(name, fn);
   }
 
