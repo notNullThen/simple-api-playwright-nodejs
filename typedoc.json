@@ -3,11 +3,9 @@
   "out": "docs",
   "theme": "default",
   "excludePrivate": true,
-  "excludeInternal": false,
+  "excludeInternal": true,
   "excludeExternals": true,
-  "excludeProtected": false,
   "includeVersion": true,
-  "stripInternal": true,
   "categorizeByGroup": true,
   "categoryOrder": [
     "Classes",
