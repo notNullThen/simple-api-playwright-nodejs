@@ -1,11 +1,4 @@
-import { APIRequestContext, APIResponse, Page, Response } from "playwright";
-
-let test: any = null;
-try {
-  test = require("@playwright/test").test;
-} catch {
-  // @playwright/test not available, test.step will be unavailable
-}
+import { APIRequestContext, APIResponse, Page, Response, test } from "@playwright/test";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "HEAD" | "PATCH";
 
@@ -138,10 +131,7 @@ export default class APIClient {
   }
 
   private async executeRequest<T>(name: string, fn: () => Promise<{ response: APIResponse | Response; responseBody: T }>) {
-    if (test?.step) {
-      return await test.step(name, fn);
-    }
-    return await fn();
+    return await test.step(name, fn);
   }
 
   protected connectUrlParts(...parts: string[]) {

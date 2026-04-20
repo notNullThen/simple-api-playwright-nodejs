@@ -1,4 +1,4 @@
-import { APIRequestContext, Page } from "playwright";
+import { APIRequestContext, Page } from "@playwright/test";
 import APIClient, { RequestParameters } from "./client";
 
 export type APIContext = Page | APIRequestContext;

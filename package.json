@@ -33,27 +33,21 @@
   ],
   "scripts": {
     "build": "npm run build:types && npm run build:cjs && npm run build:esm && npm run build:browser",
-    "build:cjs": "esbuild src/index.ts --bundle --platform=node --format=cjs --outdir=dist/cjs --external:playwright",
-    "build:esm": "esbuild src/index.ts --bundle --platform=node --format=esm --outdir=dist/esm --external:playwright",
-    "build:browser": "esbuild src/index.ts --bundle --platform=browser --format=iife --global-name=SimpleAPIPlaywright --outfile=dist/browser/index.js --external:playwright",
+    "build:cjs": "esbuild src/index.ts --bundle --platform=node --format=cjs --outdir=dist/cjs --external:@playwright/test",
+    "build:esm": "esbuild src/index.ts --bundle --platform=node --format=esm --outdir=dist/esm --external:@playwright/test",
+    "build:browser": "esbuild src/index.ts --bundle --platform=browser --format=iife --global-name=SimpleAPIPlaywright --outfile=dist/browser/index.js --external:@playwright/test",
     "build:types": "tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist/types",
     "docs:generate": "typedoc --out docs src/index.ts",
     "prepublishOnly": "npm run build && npm run docs:generate",
     "clean": "rm -rf dist docs"
   },
   "peerDependencies": {
-    "playwright": ">=1.40.0"
-  },
-  "peerDependenciesMeta": {
-    "@playwright/test": {
-      "optional": true
-    }
+    "@playwright/test": ">=1.40.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.0",
     "@types/node": "^20.0.0",
     "esbuild": "^0.20.0",
-    "playwright": "^1.58.0",
     "typedoc": "^0.25.0",
     "typescript": "^5.0.0"
   },
