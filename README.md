@@ -69,20 +69,15 @@ test("Custom endpoint", async ({ request }) => {
 Intercept network requests triggered by UI actions:
 
 ```typescript
-test("Login and verify request", async ({ page }) => {
-  const usersAPI = new UsersAPI(page);
+test("Add to basket and verify", async ({ page }) => {
+  const api = new UsersAPI(page);
 
-  // Start waiting for the login API response
-  const loginResponseTask = usersAPI.getUser(1).wait();
-
-  // Trigger the UI action and wait for both to complete
-  await Promise.all([
+  const [, loginResponse] = await Promise.all([
     page.click("button:has-text('Login')"),
-    loginResponseTask,
+    api.getUser(1).wait(),
   ]);
 
-  const { responseBody: user } = await loginResponseTask;
-  expect(user.id).toBe(1);
+  expect(loginResponse.responseBody.id).toBe(1);
 });
 ```
 
