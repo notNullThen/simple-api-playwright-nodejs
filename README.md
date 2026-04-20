@@ -2,6 +2,21 @@
 
 Type-safe API testing with [Playwright](https://playwright.dev/). Request intercepts, type-safe endpoints, and dual-mode support for both API and UI tests.
 
+Do API requests like this:
+
+```typescript
+const response = await api.createUser(user).request();
+```
+
+or API waits like this:
+
+```typescript
+const [, loginResponse] = await Promise.all([
+  page.click(loginButton),
+  api.getUser(1).wait(),
+]);
+```
+
 ## Installation
 
 ```bash
@@ -73,7 +88,7 @@ test("Add to basket and verify", async ({ page }) => {
   const api = new UsersAPI(page);
 
   const [, loginResponse] = await Promise.all([
-    page.click("button:has-text('Login')"),
+    page.click(loginButton),
     api.getUser(1).wait(),
   ]);
 
@@ -90,20 +105,22 @@ APIClient.setBearerToken(request, "your-jwt-token");
 ## Features
 
 - ✨ Type-safe HTTP requests with TypeScript generics
-- 🎭 Dual-mode: Direct API calls or UI-based request interception  
+- 🎭 Dual-mode: Direct API calls or UI-based request interception
 - 🔐 Built-in bearer token support
 - ⚡ Minimal dependencies (Playwright peer dependency)
 - 🌐 Works with Node.js, browser, ESM, and CommonJS
 
 ## API Reference
 
-**APIClient**
+### APIClient
+
 - `setInitialConfig(options)` - Set default base URL and timeouts
 - `setBearerToken(context, token)` - Add bearer token to requests
 - `request<T>(context)` - Execute direct request
 - `wait<T>(context)` - Wait for intercepted request
 
-**APIEndpointBase**
+### APIEndpointBase
+
 - `action<T>(params)` - Define typed API endpoint action
 
 ## Documentation
