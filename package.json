@@ -24,8 +24,7 @@
     ".": {
       "types": "./dist/types/index.d.ts",
       "require": "./dist/cjs/index.js",
-      "import": "./dist/esm/index.js",
-      "browser": "./dist/browser/index.js"
+      "import": "./dist/esm/index.js"
     }
   },
   "files": [
@@ -45,9 +44,9 @@
     "@playwright/test": ">=1.40.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.0",
+    "@playwright/test": "^1.59.1",
     "@types/node": "^20.0.0",
-    "esbuild": "^0.20.0",
+    "esbuild": "^0.28.0",
     "typedoc": "^0.25.0",
     "typescript": "^5.0.0"
   },
