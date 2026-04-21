@@ -14,9 +14,9 @@ const response = await api.createUser(user).request();
 or API waits like this:
 
 ```typescript
-const [, loginResponse] = await Promise.all([
+const [, userResponse] = await Promise.all([
   page.click(loginButton),
-  api.getUser(1).wait(),
+  api.getUser(userId).wait(),
 ]);
 ```
 
