@@ -5,19 +5,47 @@
 
 Type-safe API testing with [Playwright](https://playwright.dev/). Request intercepts, type-safe endpoints, and dual-mode support for both API and UI tests.
 
-Do API requests like this:
+Make API requests like this:
 
 ```typescript
 const response = await api.createUser(user).request();
 ```
 
-or API waits like this:
+Or API waits like this:
 
 ```typescript
 const [, userResponse] = await Promise.all([
   page.click(loginButton),
   api.getUser(userId).wait(),
 ]);
+```
+
+Before that, define your API endpoints like this:
+
+```typescript
+import { APIEndpointBase } from "simple-api-playwright";
+
+type User {
+  id: number;
+  name: string;
+}
+
+class UsersAPI extends APIEndpointBase {
+  async getUser(id: number) {
+    return this.action<User>({
+      url: `/users/${id}`,
+      method: "GET",
+    }).request();
+  }
+
+  async createUser(body: User) {
+    return this.action<User>({
+      url: "/users",
+      method: "POST",
+      body,
+    }).request();
+  }
+}
 ```
 
 ## Installation
@@ -54,7 +82,7 @@ test("API request", async ({ request }) => {
 ```typescript
 import { APIEndpointBase } from "simple-api-playwright";
 
-interface User {
+type User {
   id: number;
   name: string;
 }
