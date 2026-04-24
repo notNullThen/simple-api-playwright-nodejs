@@ -1,17 +1,18 @@
 # simple-api-playwright
 
 [![npm](https://img.shields.io/npm/v/simple-api-playwright.svg)](https://www.npmjs.com/package/simple-api-playwright)
-[![NuGet](https://img.shields.io/nuget/v/SimpleApiPlaywright.svg)](https://www.nuget.org/packages/SimpleApiPlaywright/)[![GitHub](https://img.shields.io/badge/github-repo-black.svg)](https://github.com/notNullThen/simple-api-playwright-nodejs)
+[![NuGet](https://img.shields.io/nuget/v/SimpleApiPlaywright.svg)](https://www.nuget.org/packages/SimpleApiPlaywright/)
+[![GitHub](https://img.shields.io/badge/github-repo-black.svg)](https://github.com/notNullThen/simple-api-playwright-nodejs)
 
 Type-safe API testing with [Playwright](https://playwright.dev/). Request intercepts, type-safe endpoints, and dual-mode support for both API and UI tests.
 
-Do API requests like this:
+Make API requests like this:
 
 ```typescript
 const response = await api.createUser(user).request();
 ```
 
-or API waits like this:
+Or API waits like this:
 
 ```typescript
 const [, userResponse] = await Promise.all([
@@ -20,89 +21,86 @@ const [, userResponse] = await Promise.all([
 ]);
 ```
 
+Before that, define your API endpoints like this:
+
+```typescript
+import { APIEndpointBase } from "simple-api-playwright";
+
+export default class UsersAPI extends APIEndpointBase {
+  constructor(context: APIContext) {
+    super(context, "api/users");
+  }
+
+  getUser = async (id: string) =>
+    this.action<User>({ url: `/users/${id}`, method: "GET" });
+
+  createUser = async (body: User) =>
+    this.action<User>({ url: "/users", method: "POST", body });
+}
+```
+
 ## Installation
 
 ```bash
 npm install --save-dev simple-api-playwright @playwright/test
 ```
 
-## Usage
+## Quick Start
 
-### Basic API Request
+1. **Configure APIClient:**
 
 ```typescript
 import { APIClient } from "simple-api-playwright";
-import { test } from "@playwright/test";
 
-test("API request", async ({ request }) => {
-  APIClient.setInitialConfig({
-    baseURL: "https://api.example.com",
-  });
-
-  const client = new APIClient("https://api.example.com", {
-    url: "/users/1",
-    method: "GET",
-  });
-
-  const { responseBody } = await client.request(request);
-  console.log(responseBody);
+APIClient.setInitialConfig({
+  baseURL: "https://api.example.com",
+  apiWaitTimeout: 5000,
+  expectedStatusCodes: [200, 201],
 });
+
+// Set bearer token for authenticated requests
+APIClient.setBearerToken(request, "your-jwt-token");
 ```
 
-### Custom Endpoints
+2. **Create your API endpoint class:**
 
 ```typescript
 import { APIEndpointBase } from "simple-api-playwright";
 
-interface User {
-  id: number;
-  name: string;
-}
-
-class UsersAPI extends APIEndpointBase {
-  async getUser(id: number) {
-    return this.action<User>({
-      url: `/users/${id}`,
-      method: "GET",
-    }).request();
+export default class UsersAPI extends APIEndpointBase {
+  constructor(context: APIContext) {
+    super(context, "api/users");
   }
 
-  async createUser(name: string) {
-    return this.action<User>({
-      url: "/users",
-      method: "POST",
-      body: { name },
-    }).request();
-  }
-}
+  getUser = async (id: string) =>
+    this.action<User>({ url: `/users/${id}`, method: "GET" });
 
-test("Custom endpoint", async ({ request }) => {
+  createUser = async (body: User) =>
+    this.action<User>({ url: "/users", method: "POST", body });
+}
+```
+
+3. **Use it in your tests:**
+
+```typescript
+import { test } from "@playwright/test";
+
+test("fetch user", async ({ request }) => {
   const api = new UsersAPI(request);
-  const { responseBody: user } = await api.getUser(1);
+  const { responseBody: user } = await api.getUser("some-id");
 });
 ```
 
-### UI Testing with Request Interception
-
-Intercept network requests triggered by UI actions:
+4. **With UI interactions:**
 
 ```typescript
-test("Add to basket and verify", async ({ page }) => {
+test("click and verify", async ({ page }) => {
   const api = new UsersAPI(page);
-
-  const [, loginResponse] = await Promise.all([
+  const [, response] = await Promise.all([
     page.click(loginButton),
-    api.getUser(1).wait(),
+    api.getUser("some-id").wait(),
   ]);
-
-  expect(loginResponse.responseBody.id).toBe(1);
 });
-```
-
-### Bearer Token Authentication
-
-```typescript
-APIClient.setBearerToken(request, "your-jwt-token");
 ```
 
 ## Features
@@ -113,20 +111,110 @@ APIClient.setBearerToken(request, "your-jwt-token");
 - ⚡ Minimal dependencies (Playwright peer dependency)
 - 🌐 Works with Node.js, browser, ESM, and CommonJS
 
-## API Reference
+## Authentication & Configuration
 
-### APIClient
+### Setting Global Configuration
 
-- `setInitialConfig(options)` - Set default base URL and timeouts
-- `setBearerToken(context, token)` - Add bearer token to requests
-- `request<T>(context)` - Execute direct request
-- `wait<T>(context)` - Wait for intercepted request
+The best place to configure `APIClient.setInitialConfig()` is in your `playwright.config.ts` file, so all tests automatically use consistent API settings:
 
-### APIEndpointBase
+```typescript
+// playwright.config.ts
+import { defineConfig } from "@playwright/test";
+import { APIClient } from "simple-api-playwright";
 
-- `action<T>(params)` - Define typed API endpoint action
+const additionalConfig = {
+  apiWaitTimeout: 5 * 1000,
+  expectedAPIResponseCodes: [200, 201],
+};
 
-## Documentation
+APIClient.setInitialConfig({
+  baseURL: "https://api.example.com",
+  apiWaitTimeout: additionalConfig.apiWaitTimeout,
+  expectedStatusCodes: additionalConfig.expectedAPIResponseCodes,
+});
+
+export default defineConfig({
+  testDir: "./tests",
+  fullyParallel: true,
+  use: {
+    baseURL: "https://api.example.com",
+    actionTimeout: 5000,
+  },
+});
+```
+
+This ensures all tests and workers inherit the same configuration without repetition.
+
+### Bearer Token Authentication
+
+Set the bearer token for authenticated requests. Typically done after login in your test fixtures:
+
+```typescript
+const loginResponse = await loginPage.login(email, password);
+const token = loginResponse.authentication.token;
+APIClient.setBearerToken(request, token);
+```
+
+This is especially useful in parallel test workers where each worker needs separate authentication:
+
+```typescript
+export const test = baseTest.extend({
+  page: async ({ page }, use) => {
+    const context = page.context();
+    const loginResponse = await loginToCurrentUser(context.request);
+
+    const token = loginResponse.token;
+    APIClient.setBearerToken(context.request, token);
+
+    await use(page);
+  },
+});
+```
+
+## Parallel Worker Support
+
+For parallel test execution, manage separate user accounts and authentication per worker:
+
+```typescript
+const createdUsers = new Map<number, User>();
+const loginResponses = new Map<number, LoginResponse>();
+
+export const test = baseTest.extend({
+  createdUser: [
+    async ({}, use) => {
+      const workerIndex = test.info().workerIndex;
+      await use(createdUsers.get(workerIndex));
+    },
+    { scope: "worker" },
+  ],
+  loginResponse: [
+    async ({}, use) => {
+      const workerIndex = test.info().workerIndex;
+      const loginResponse = loginResponses.get(workerIndex);
+      await use(loginResponse);
+    },
+    { scope: "worker" },
+  ],
+  page: async ({ page }, use) => {
+    const context = page.context();
+    const workerIndex = test.info().workerIndex;
+
+    // Acquire user account for this worker
+    const user = await acquireUserForWorker(context.request, workerIndex);
+
+    // Login and set bearer token
+    const loginResponse = await loginUser(context.request, user);
+    APIClient.setBearerToken(context.request, loginResponse.token);
+
+    createdUsers.set(workerIndex, user);
+    loginResponses.set(workerIndex, loginResponse);
+
+    await use(page);
+  },
+});
+```
+
+This ensures each parallel worker has its own authenticated session.
 
 For more examples and detailed API docs, see [GitHub](https://github.com/notNullThen/simple-api-playwright-nodejs).
 
