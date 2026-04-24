@@ -25,26 +25,17 @@ Before that, define your API endpoints like this:
 ```typescript
 import { APIEndpointBase } from "simple-api-playwright";
 
-type User {
+type User = {
   id: number;
   name: string;
-}
+};
 
 class UsersAPI extends APIEndpointBase {
-  async getUser(id: number) {
-    return this.action<User>({
-      url: `/users/${id}`,
-      method: "GET",
-    }).request();
-  }
+  getUser = async (id: string) =>
+    this.action<User>({ url: `/users/${id}`, method: "GET" });
 
-  async createUser(body: User) {
-    return this.action<User>({
-      url: "/users",
-      method: "POST",
-      body,
-    }).request();
-  }
+  createUser = async (body: User) =>
+    this.action<User>({ url: "/users", method: "POST", body });
 }
 ```
 
@@ -82,26 +73,17 @@ test("API request", async ({ request }) => {
 ```typescript
 import { APIEndpointBase } from "simple-api-playwright";
 
-type User {
+type User = {
   id: number;
   name: string;
-}
+};
 
 class UsersAPI extends APIEndpointBase {
-  async getUser(id: number) {
-    return this.action<User>({
-      url: `/users/${id}`,
-      method: "GET",
-    }).request();
-  }
+  getUser = async (id: string) =>
+    this.action<User>({ url: `/users/${id}`, method: "GET" });
 
-  async createUser(name: string) {
-    return this.action<User>({
-      url: "/users",
-      method: "POST",
-      body: { name },
-    }).request();
-  }
+  createUser = async (name: string) =>
+    this.action<User>({ url: "/users", method: "POST", body: { name } });
 }
 
 test("Custom endpoint", async ({ request }) => {
