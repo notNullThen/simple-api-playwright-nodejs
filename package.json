@@ -1,5 +1,5 @@
 {
-  "name": "simple-api-playwright",
+  "name": "@notnullthen/simple-api-playwright",
   "version": "1.0.6",
   "description": "Lightweight API testing framework built on Playwright for Node.js",
   "author": "Jeno Pekarjuk",
@@ -52,5 +52,8 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
