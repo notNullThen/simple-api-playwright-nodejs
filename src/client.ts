@@ -8,12 +8,35 @@ import {
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "HEAD" | "PATCH";
 
+/**
+ * Configuration options for an API request or response interceptor.
+ */
 export type RequestParameters = {
+  /**
+   * The relative URL path or absolute URL of the API endpoint.
+   */
   url?: string | null;
+  /**
+   * The HTTP method to be used for the request (e.g., 'GET', 'POST').
+   */
   method: HttpMethod;
+  /**
+   * List of expected HTTP status codes. If the response status is not in this list, an error is thrown.
+   */
   expectedStatusCodes?: number[];
+  /**
+   * The request payload/body to send (for POST, PUT, PATCH, etc.).
+   */
   body?: object;
+  /**
+   * Timeout in milliseconds for waiting/intercepting the request or response.
+   */
   apiWaitTimeout?: number;
+  /**
+   * Whether the URL must be an exact match (ignoring case, leading/trailing slashes) when waiting/intercepting.
+   * Defaults to `false` if not explicitly provided.
+   */
+  exactUrlMatch?: boolean;
 };
 
 const tokenStorage = new WeakMap<object, string>();
@@ -60,6 +83,7 @@ export default class APIClient {
     this.apiWaitTimeout =
       params.apiWaitTimeout ?? APIClient.initialApiWaitTimeout;
     this.body = params.body;
+    this.exactUrlMatch = params.exactUrlMatch ?? false;
   }
 
   protected static initialApiWaitTimeout: number;
@@ -72,6 +96,7 @@ export default class APIClient {
   protected route: string;
   protected method: HttpMethod;
   protected body?: object;
+  protected exactUrlMatch: boolean;
 
   /**
    * Configure default settings for all APIClient instances
@@ -138,8 +163,11 @@ export default class APIClient {
             const expectedUrl = this.normalizeUrl(this.fullURL);
             const requestMethod = response.request().method();
 
-            if (!actualUrl.toLowerCase().includes(expectedUrl.toLowerCase()))
-              return false;
+            const isMatch = this.exactUrlMatch
+              ? actualUrl === expectedUrl
+              : actualUrl.toLowerCase().includes(expectedUrl.toLowerCase());
+
+            if (!isMatch) return false;
             if (requestMethod.toLowerCase() !== this.method.toLowerCase())
               return false;
             return true;
