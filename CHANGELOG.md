@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2026-07-28
+
+### Added
+
+- Added `exactUrlMatch` parameter to `RequestParameters` (defaults to `false`) to allow for exact URL matching during response interception.
+
 ## [1.0.2] - [1.0.8] - 2026-04-24
 
 ### Documentation
@@ -50,4 +56,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Error handling documentation
 - TypeDoc for generated API documentation
 
+[1.0.9]: https://github.com/notNullThen/simple-api-playwright-nodejs/releases/tag/v1.0.9
 [1.0.0]: https://github.com/notNullThen/simple-api-playwright-nodejs/releases/tag/v1.0.0
