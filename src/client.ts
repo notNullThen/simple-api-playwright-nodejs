@@ -127,8 +127,8 @@ export default class APIClient {
    * @returns Object containing the response and parsed response body
    * @throws Error if context is not a Page (use this only in UI tests)
    */
-  public async wait<T>(context: Page) {
-    return await this.executeRequest<T>(
+  public wait = async <T>(context: Page) =>
+    await this.executeRequest<T>(
       `Wait for ${this.method} "${this.route}" ${this.expectedStatusCodes.join(", ")}`,
       async () => {
         const response = await context.waitForResponse(
@@ -151,43 +151,35 @@ export default class APIClient {
         return await this.getResponse<T>(response);
       },
     );
-  }
 
-  private async executeRequest<T>(
+  private executeRequest = async <T>(
     name: string,
     fn: () => Promise<{ response: APIResponse | Response; responseBody: T }>,
-  ) {
-    return await test.step(name, fn);
-  }
+  ) => await test.step(name, fn);
 
-  protected connectUrlParts(...parts: string[]) {
-    const connectedParts = parts
+  protected connectUrlParts = (...parts: string[]) =>
+    parts
       .filter((part) => part)
       .map((part) => this.normalizeUrl(part))
       .filter((part) => part.trim().length > 0)
       .join("/");
 
-    return connectedParts;
-  }
-
-  protected normalizeUrl(url: string) {
-    return this.removeLeadingSlash(this.removeTrailingSlash(url));
-  }
+  protected normalizeUrl = (url: string) =>
+    this.removeLeadingSlash(this.removeTrailingSlash(url));
 
   private static formatBearerToken(token: string) {
     const prefix = "Bearer " as const;
     return token.startsWith(prefix) ? token : prefix + token;
   }
 
-  private removeTrailingSlash(url: string) {
-    return url.endsWith("/") ? url.slice(0, -1) : url;
-  }
+  private removeTrailingSlash = (url: string) =>
+    url.endsWith("/") ? url.slice(0, -1) : url;
 
-  private removeLeadingSlash(url: string) {
-    return url.startsWith("/") ? url.slice(1) : url;
-  }
+  private removeLeadingSlash = (url: string) =>
+    url.startsWith("/") ? url.slice(1) : url;
 
   private async getResponse<T>(response: APIResponse | Response) {
+    // Leaved const for debug ease
     const responseObject = await response.json();
     return { response, responseBody: responseObject as T };
   }
