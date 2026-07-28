@@ -1,6 +1,6 @@
 {
   "name": "simple-api-playwright",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "Lightweight API testing framework built on Playwright for Node.js",
   "author": "Jeno Pekarjuk",
   "license": "MIT",

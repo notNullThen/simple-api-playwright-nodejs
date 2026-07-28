@@ -4,7 +4,9 @@
 [![NuGet](https://img.shields.io/nuget/v/SimpleApiPlaywright.svg)](https://www.nuget.org/packages/SimpleApiPlaywright/)
 [![GitHub](https://img.shields.io/badge/github-repo-black.svg)](https://github.com/notNullThen/simple-api-playwright-nodejs)
 
-Type-safe API testing with [Playwright](https://playwright.dev/). Request intercepts, type-safe endpoints, and dual-mode support for both API and UI tests.
+### Tired of writing boilerplate API client wrappers and verbose request predicates in Playwright?
+
+Simple & laconic API testing with [Playwright](https://playwright.dev/). Request intercepts, type-safe endpoints, and dual-mode support for both API and UI tests.
 
 Make API requests like this:
 
