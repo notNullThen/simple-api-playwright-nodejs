@@ -17,10 +17,9 @@ const response = await api.createUser(user).request();
 Or API waits like this:
 
 ```typescript
-const [, userResponse] = await Promise.all([
-  page.click(loginButton),
-  api.getUser(userId).wait(),
-]);
+const userResponsePromise = api.getUser(userId).wait();
+await page.click(loginButton);
+const userResponse = await userResponsePromise;
 ```
 
 Before that, define your API endpoints like this:
@@ -89,7 +88,7 @@ import { test } from "@playwright/test";
 
 test("fetch user", async ({ request }) => {
   const api = new UsersAPI(request);
-  const { responseBody: user } = await api.getUser("some-id");
+  const { responseBody: user } = await api.getUser("some-id").request();
 });
 ```
 
@@ -98,10 +97,9 @@ test("fetch user", async ({ request }) => {
 ```typescript
 test("click and verify", async ({ page }) => {
   const api = new UsersAPI(page);
-  const [, response] = await Promise.all([
-    page.click(loginButton),
-    api.getUser("some-id").wait(),
-  ]);
+  const responsePromise = api.getUser("some-id").wait();
+  await page.click(loginButton);
+  const response = await responsePromise;
 });
 ```
 
