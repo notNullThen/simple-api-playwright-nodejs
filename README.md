@@ -4,6 +4,8 @@
 [![NuGet](https://img.shields.io/nuget/v/SimpleApiPlaywright.svg)](https://www.nuget.org/packages/SimpleApiPlaywright/)
 [![GitHub](https://img.shields.io/badge/github-repo-black.svg)](https://github.com/notNullThen/simple-api-playwright-nodejs)
 
+> **🚀 Demo:** See this package in action in the [OWASP Playwright API C# Docker project](https://github.com/notNullThen/owasp-playwright-api-csharp-docker).
+
 ### Tired of writing boilerplate API client wrappers and verbose request predicates in Playwright?
 
 Simple & laconic API testing with [Playwright](https://playwright.dev/). Request intercepts, type-safe endpoints, and dual-mode support for both API and UI tests.
