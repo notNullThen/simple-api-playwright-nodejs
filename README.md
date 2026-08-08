@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/v/SimpleApiPlaywright.svg)](https://www.nuget.org/packages/SimpleApiPlaywright/)
 [![GitHub](https://img.shields.io/badge/github-repo-black.svg)](https://github.com/notNullThen/simple-api-playwright-nodejs)
 
-> **🚀 Demo:** See this package in action in the [OWASP Playwright API C# Docker project](https://github.com/notNullThen/owasp-playwright-api-csharp-docker).
+> **🚀 Demo:** See this package in action in the [OWASP Playwright API TypeScript Docker project](https://github.com/notNullThen/owasp-playwright-api-typescript-docker).
 
 ### Tired of writing boilerplate API client wrappers and verbose request predicates in Playwright?
 
