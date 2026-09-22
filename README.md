@@ -114,6 +114,7 @@ validation.
 ## Features
 
 - ✨ Type-safe HTTP requests with TypeScript generics
+- 🎯 **Typed Response Matching**: Get the exact API response whose body matches the response type you defined. `wait<T>()` skips empty, `null`, or malformed JSON response bodies.
 - 🎭 Dual-mode: Direct API calls or UI-based request interception
 - 🔐 Built-in bearer token support
 - ⚡ Minimal dependencies (Playwright peer dependency)
