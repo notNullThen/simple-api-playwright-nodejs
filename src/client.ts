@@ -6,6 +6,7 @@ import {
   test,
 } from "@playwright/test";
 
+/** HTTP methods supported by API requests and browser-response waits. */
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "HEAD" | "PATCH";
 
 /**
@@ -17,11 +18,11 @@ export type RequestParameters = {
    */
   url?: string | null;
   /**
-   * The HTTP method to be used for the request (e.g., 'GET', 'POST').
+   * The HTTP method used for the request or response match.
    */
   method: HttpMethod;
   /**
-   * List of expected HTTP status codes. If the response status is not in this list, an error is thrown.
+   * The accepted response status codes. An unexpected status code causes an error.
    */
   expectedStatusCodes?: number[];
   /**
@@ -29,12 +30,13 @@ export type RequestParameters = {
    */
   body?: object;
   /**
-   * Timeout in milliseconds for waiting/intercepting the request or response.
+   * The timeout in milliseconds for sending the request or waiting for a response. When omitted,
+   * the globally configured timeout is used. Set to `0` to disable the Playwright timeout.
    */
   apiWaitTimeout?: number;
   /**
-   * Whether the URL must be an exact match (ignoring case, leading/trailing slashes) when waiting/intercepting.
-   * Defaults to `false` if not explicitly provided.
+   * Whether browser responses must match the complete URL instead of containing the configured
+   * URL. Leading and trailing slashes are ignored. Defaults to `false`.
    */
   exactUrlMatch?: boolean;
 };
@@ -68,6 +70,12 @@ const tokenStorage = new WeakMap<object, string>();
  * ```
  */
 export default class APIClient {
+  /**
+   * Creates a client for a single configured endpoint.
+   *
+   * @param apiBaseURL The API-specific base URL or path.
+   * @param params Request and response-matching configuration.
+   */
   constructor(
     protected apiBaseURL: string,
     params: RequestParameters,
@@ -99,8 +107,10 @@ export default class APIClient {
   protected exactUrlMatch: boolean;
 
   /**
-   * Configure default settings for all APIClient instances
-   * @param options Configuration object with baseURL, expectedStatusCodes, and apiWaitTimeout
+   * Configures the defaults used by subsequently created clients.
+   *
+   * @param options Global base URL, accepted status codes, and timeout. A timeout of `0` disables
+   * the Playwright timeout.
    */
   public static setInitialConfig(options: {
     apiWaitTimeout: number;
@@ -114,18 +124,21 @@ export default class APIClient {
   }
 
   /**
-   * Set Bearer token authentication for a specific context
-   * @param context The context (APIRequestContext or Page) to associate with the token
-   * @param token The bearer token (with or without "Bearer " prefix)
+   * Sets Bearer-token authentication for a specific Playwright context.
+   *
+   * @param context The `APIRequestContext` or `Page` to associate with the token.
+   * @param token The bearer token, with or without the `Bearer ` prefix.
    */
   public static setBearerToken(context: object, token: string) {
     tokenStorage.set(context, this.formatBearerToken(token));
   }
 
   /**
-   * Execute an API request using APIRequestContext
-   * @param context The APIRequestContext from Playwright
-   * @returns Object containing the response and parsed response body
+   * Executes the configured API request and parses its JSON response body.
+   *
+   * @typeParam T The expected response body type.
+   * @param context The Playwright request context used to send the request.
+   * @returns The Playwright API response and its parsed body.
    */
   public async request<T>(context: APIRequestContext) {
     return await this.executeRequest<T>(
@@ -147,36 +160,50 @@ export default class APIClient {
   }
 
   /**
-   * Wait for an API response using Page context (UI testing)
-   * @param context The Page context from Playwright
-   * @returns Object containing the response and parsed response body
-   * @throws Error if context is not a Page (use this only in UI tests)
+   * Waits for a browser response matching the configured URL and HTTP method.
+   *
+   * Matching responses with empty, `null`, or malformed JSON bodies are ignored. Waiting
+   * continues until a response with a JSON body is found or Playwright times out while waiting
+   * for another matching response.
+   *
+   * @typeParam T The expected response body type. TypeScript types are not available for runtime
+   * shape validation, so valid JSON is returned as `T`.
+   * @param context The Playwright page used to observe browser responses.
+   * @returns The matching browser response and its parsed body.
    */
   public wait = async <T>(context: Page) =>
     await this.executeRequest<T>(
       `Wait for ${this.method} "${this.route}" ${this.expectedStatusCodes.join(", ")}`,
       async () => {
-        const response = await context.waitForResponse(
-          (response: Response) => {
-            // Ignore trailing slash and casing differences
-            const actualUrl = this.normalizeUrl(response.url());
-            const expectedUrl = this.normalizeUrl(this.fullURL);
-            const requestMethod = response.request().method();
+        while (true) {
+          const response = await context.waitForResponse(
+            (response: Response) => {
+              // Ignore trailing slash and casing differences
+              const actualUrl = this.normalizeUrl(response.url());
+              const expectedUrl = this.normalizeUrl(this.fullURL);
+              const requestMethod = response.request().method();
 
-            const isMatch = this.exactUrlMatch
-              ? actualUrl === expectedUrl
-              : actualUrl.toLowerCase().includes(expectedUrl.toLowerCase());
+              const isMatch = this.exactUrlMatch
+                ? actualUrl === expectedUrl
+                : actualUrl.toLowerCase().includes(expectedUrl.toLowerCase());
 
-            if (!isMatch) return false;
-            if (requestMethod.toLowerCase() !== this.method.toLowerCase())
-              return false;
-            return true;
-          },
-          { timeout: this.apiWaitTimeout },
-        );
+              if (!isMatch) return false;
+              if (requestMethod.toLowerCase() !== this.method.toLowerCase())
+                return false;
+              return true;
+            },
+            { timeout: this.apiWaitTimeout },
+          );
 
-        this.validateStatusCode(response.status());
-        return await this.getResponse<T>(response);
+          this.validateStatusCode(response.status());
+
+          try {
+            const result = await this.getResponse<T>(response);
+            if (result.responseBody !== null) return result;
+          } catch (error) {
+            if (!(error instanceof SyntaxError)) throw error;
+          }
+        }
       },
     );
 
@@ -185,6 +212,7 @@ export default class APIClient {
     fn: () => Promise<{ response: APIResponse | Response; responseBody: T }>,
   ) => await test.step(name, fn);
 
+  /** Joins URL segments while normalizing their leading and trailing slashes. */
   protected connectUrlParts = (...parts: string[]) =>
     parts
       .filter((part) => part)
@@ -192,6 +220,7 @@ export default class APIClient {
       .filter((part) => part.trim().length > 0)
       .join("/");
 
+  /** Removes leading and trailing slashes from a URL or URL segment. */
   protected normalizeUrl = (url: string) =>
     this.removeLeadingSlash(this.removeTrailingSlash(url));
 

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2026-09-22
+
+### Added
+
+- Typed browser-response waits now skip empty, `null`, and malformed JSON bodies.
+- Added comprehensive JSDoc for the public API.
+
 ## [1.1.1] - 2026-08-08
 
 ### Documentation
@@ -63,5 +70,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TypeDoc for generated API documentation
 
 [1.1.1]: https://github.com/notNullThen/simple-api-playwright-nodejs/releases/tag/v1.1.1
+[1.1.4]: https://github.com/notNullThen/simple-api-playwright-nodejs/releases/tag/v1.1.4
 [1.1.0]: https://github.com/notNullThen/simple-api-playwright-nodejs/releases/tag/v1.1.0
 [1.0.0]: https://github.com/notNullThen/simple-api-playwright-nodejs/releases/tag/v1.0.0

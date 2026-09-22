@@ -105,6 +105,12 @@ test("click and verify", async ({ page }) => {
 });
 ```
 
+When `wait<T>()` observes multiple responses with the same URL and HTTP method, it skips responses
+with empty, `null`, or malformed JSON bodies and continues waiting for one with a valid JSON body.
+If no valid response follows, the wait ends with Playwright's normal timeout error. Because
+TypeScript types are erased at runtime, the parsed JSON is treated as `T` without field-level shape
+validation.
+
 ## Features
 
 - ✨ Type-safe HTTP requests with TypeScript generics

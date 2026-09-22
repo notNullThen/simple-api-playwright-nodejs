@@ -1,6 +1,7 @@
 import { APIRequestContext, Page } from "@playwright/test";
 import APIClient, { RequestParameters } from "./client";
 
+/** A Playwright context supported by an API endpoint wrapper. */
 export type APIContext = Page | APIRequestContext;
 
 /**
@@ -9,8 +10,6 @@ export type APIContext = Page | APIRequestContext;
  * Extend this class to create specific endpoint implementations. It provides
  * a convenient interface for defining API operations with type-safe parameters
  * and responses.
- *
- * @typeParam T - The context type (Page for UI tests, APIRequestContext for API tests)
  *
  * @example
  * ```typescript
@@ -43,15 +42,24 @@ export type APIContext = Page | APIRequestContext;
  * ```
  */
 export default abstract class APIEndpointBase {
+  /**
+   * Creates an endpoint wrapper.
+   *
+   * @param context A Playwright `Page` for browser-response waits or an `APIRequestContext` for
+   * direct requests.
+   * @param baseURL The API-specific base URL or path used by actions created by this endpoint.
+   */
   constructor(
     private context: APIContext,
     private baseURL: string,
   ) {}
 
   /**
-   * Create an action for a specific endpoint operation
-   * @param params Request parameters including URL, method, body, etc.
-   * @returns Object with `request()` and `wait()` methods for executing the action
+   * Creates a typed action for a specific endpoint operation.
+   *
+   * @typeParam T The expected response body type.
+   * @param params Request and response-matching configuration.
+   * @returns An action with `request()` and `wait()` methods.
    *
    * @example
    * ```typescript
@@ -71,8 +79,9 @@ export default abstract class APIEndpointBase {
   public action<T>(params: RequestParameters) {
     return {
       /**
-       * Execute the request directly (for API tests)
-       * @returns Promise with response and parsed response body
+       * Executes the request directly. Intended for API tests using an `APIRequestContext`.
+       *
+       * @returns The Playwright API response and its parsed body.
        */
       request: async () => {
         return await new APIClient(this.baseURL, params).request<T>(
@@ -81,9 +90,11 @@ export default abstract class APIEndpointBase {
       },
 
       /**
-       * Wait for the response to be intercepted (for UI tests only)
-       * @returns Promise with response and parsed response body
-       * @throws Error if context is not a Page
+       * Waits for a matching browser response. Intended for UI tests using a `Page`.
+       * Empty, `null`, and malformed JSON response bodies are ignored.
+       *
+       * @returns The matching browser response and its parsed body.
+       * @throws An error when the endpoint was not created with a Playwright `Page`.
        */
       wait: async () => {
         const isPage = "goto" in this.context;
