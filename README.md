@@ -27,17 +27,17 @@ const userResponse = await userResponsePromise;
 Before that, define your API endpoints like this:
 
 ```typescript
-import { APIEndpointBase } from "simple-api-playwright";
+import { APIEndpointBase, type APIContext } from "simple-api-playwright";
 
 export default class UsersAPI extends APIEndpointBase {
   constructor(context: APIContext) {
     super(context, "api/users");
   }
 
-  getUser = async (id: string) =>
+  getUser = (id: string) =>
     this.action<User>({ url: `/users/${id}`, method: "GET" });
 
-  createUser = async (body: User) =>
+  createUser = (body: User) =>
     this.action<User>({ url: "/users", method: "POST", body });
 }
 ```
@@ -65,20 +65,22 @@ APIClient.setInitialConfig({
 APIClient.setBearerToken(request, "your-jwt-token");
 ```
 
+`request()` and `wait()` automatically validate response status codes against `expectedStatusCodes`.
+
 2. **Create your API endpoint class:**
 
 ```typescript
-import { APIEndpointBase } from "simple-api-playwright";
+import { APIEndpointBase, type APIContext } from "simple-api-playwright";
 
 export default class UsersAPI extends APIEndpointBase {
   constructor(context: APIContext) {
     super(context, "api/users");
   }
 
-  getUser = async (id: string) =>
+  getUser = (id: string) =>
     this.action<User>({ url: `/users/${id}`, method: "GET" });
 
-  createUser = async (body: User) =>
+  createUser = (body: User) =>
     this.action<User>({ url: "/users", method: "POST", body });
 }
 ```
@@ -86,11 +88,12 @@ export default class UsersAPI extends APIEndpointBase {
 3. **Use it in your tests:**
 
 ```typescript
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test("fetch user", async ({ request }) => {
   const api = new UsersAPI(request);
   const { responseBody: user } = await api.getUser("some-id").request();
+  expect(user.id).toBeTruthy();
 });
 ```
 
