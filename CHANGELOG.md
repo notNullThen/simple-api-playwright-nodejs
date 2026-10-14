@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-10-14
+
+### Changed
+
+- Updated the Playwright development dependency to 1.63.0.
+- Kept the existing Playwright peer dependency range for consumers.
+
 ## [1.2.0] - 2026-10-14
 
 ### Added
@@ -89,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Error handling documentation
 - TypeDoc for generated API documentation
 
+[1.2.1]: https://github.com/notNullThen/simple-api-playwright-nodejs/releases/tag/v1.2.1
 [1.2.0]: https://github.com/notNullThen/simple-api-playwright-nodejs/releases/tag/v1.2.0
 [1.1.6]: https://github.com/notNullThen/simple-api-playwright-nodejs/releases/tag/v1.1.6
 [1.1.5]: https://github.com/notNullThen/simple-api-playwright-nodejs/releases/tag/v1.1.5

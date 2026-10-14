@@ -1,6 +1,6 @@
 {
   "name": "simple-api-playwright",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Lightweight API testing framework built on Playwright for Node.js",
   "author": "Jeno Pekarjuk",
   "license": "MIT",
@@ -44,7 +44,7 @@
     "@playwright/test": ">=1.40.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "1.63.0",
     "@types/node": "^20.0.0",
     "esbuild": "^0.28.0",
     "typedoc": "^0.25.0",
