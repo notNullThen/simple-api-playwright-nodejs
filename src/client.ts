@@ -3,8 +3,10 @@ import {
   APIResponse,
   Page,
   Response,
+  Route,
   test,
 } from "@playwright/test";
+import HeldApiResponse, { waitWithTimeout } from "./held-api-response";
 
 /** HTTP methods supported by API requests and browser-response waits. */
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "HEAD" | "PATCH";
@@ -178,16 +180,8 @@ export default class APIClient {
         while (true) {
           const response = await context.waitForResponse(
             (response: Response) => {
-              // Ignore trailing slash and casing differences
-              const actualUrl = this.normalizeUrl(response.url());
-              const expectedUrl = this.normalizeUrl(this.fullURL);
               const requestMethod = response.request().method();
-
-              const isMatch = this.exactUrlMatch
-                ? actualUrl === expectedUrl
-                : actualUrl.toLowerCase().includes(expectedUrl.toLowerCase());
-
-              if (!isMatch) return false;
+              if (!this.matchesUrl(response.url(), this.fullURL)) return false;
               if (requestMethod.toLowerCase() !== this.method.toLowerCase())
                 return false;
               return true;
@@ -206,6 +200,90 @@ export default class APIClient {
         }
       },
     );
+
+  /** Holds the next browser response matching the URL, method, and accepted status codes. */
+  public async hold(context: Page): Promise<HeldApiResponse> {
+    const matchesUrl = (url: URL) => this.matchesUrl(url.href, this.fullURL);
+    let resolve!: (response: HeldApiResponse) => void;
+    let reject!: (error: unknown) => void;
+    const captured = new Promise<HeldApiResponse>((onResolve, onReject) => {
+      resolve = onResolve;
+      reject = onReject;
+    });
+    let completed = false;
+    let heldResponse: HeldApiResponse | undefined;
+    const pendingRoutes = new Set<Promise<void>>();
+
+    const removeRoute = async () => {
+      // Finish other intercepted requests before removing the handler to avoid replaying them.
+      await Promise.all(pendingRoutes);
+      if (!context.isClosed()) await context.unroute(matchesUrl, handler);
+    };
+
+    const handler = async (route: Route) => {
+      let finish!: () => void;
+      const finished = new Promise<void>((onResolve) => {
+        finish = onResolve;
+      });
+      pendingRoutes.add(finished);
+      let response: APIResponse | undefined;
+      try {
+        if (
+          completed ||
+          route.request().method().toLowerCase() !== this.method.toLowerCase()
+        ) {
+          await route.fallback();
+          return;
+        }
+
+        response = await route.fetch({ timeout: this.apiWaitTimeout, maxRedirects: 0 });
+        if (!completed && this.expectedStatusCodes.includes(response.status())) {
+          heldResponse = new HeldApiResponse(
+            route, response, this.apiWaitTimeout, removeRoute,
+          );
+          response = undefined;
+          completed = true;
+          finish();
+          resolve(heldResponse);
+          await heldResponse.completion;
+          return;
+        }
+
+        await route.fulfill({ response });
+      } catch (error) {
+        if (!completed) {
+          completed = true;
+          reject(error);
+        }
+        if (!context.isClosed() && !route.request().failure()) await route.abort();
+      } finally {
+        try {
+          if (response) await response.dispose();
+        } finally {
+          finish();
+          pendingRoutes.delete(finished);
+        }
+      }
+    };
+
+    await context.route(matchesUrl, handler);
+    try {
+      return await waitWithTimeout(captured, this.apiWaitTimeout);
+    } catch (error) {
+      completed = true;
+      if (heldResponse) await heldResponse.dispose();
+      else await removeRoute();
+      throw error;
+    }
+  }
+
+  private matchesUrl(url: string, expectedUrl: string) {
+    const actual = this.normalizeUrl(url);
+    const expected = this.normalizeUrl(expectedUrl);
+    return this.exactUrlMatch
+      ? actual === expected
+      : actual.toLowerCase().includes(expected.toLowerCase());
+  }
 
   private executeRequest = async <T>(
     name: string,

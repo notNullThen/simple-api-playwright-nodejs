@@ -114,11 +114,31 @@ If no valid response follows, the wait ends with Playwright's normal timeout err
 TypeScript types are erased at runtime, the parsed JSON is treated as `T` without field-level shape
 validation.
 
+5. **Hold a response and release it later:**
+
+```typescript
+const holdTask = api.getUser("some-id").hold();
+await page.getByRole("button", { name: "Load user" }).click();
+
+const heldResponse = await holdTask;
+try {
+  // The server has responded, but the browser is still waiting.
+  await expect(page.getByText("Loading...")).toBeVisible();
+  await heldResponse.release();
+
+  await expect(page.getByText("Loading...")).toBeHidden();
+  await expect(page.getByTestId("user-name")).toHaveText("Jane Doe");
+} finally {
+  await heldResponse.dispose();
+}
+```
+
 ## Features
 
 - ✨ Type-safe HTTP requests with TypeScript generics
 - 🎯 **Typed Response Matching**: Get the exact API response whose body matches the response type you defined. `wait<T>()` skips empty, `null`, or malformed JSON response bodies.
 - 🎭 Dual-mode: Direct API calls or UI-based request interception
+- ⏸️ Hold and release browser API responses with `hold()`
 - 🔐 Built-in bearer token support
 - ⚡ Minimal dependencies (Playwright peer dependency)
 - 🌐 Works with Node.js, browser, ESM, and CommonJS

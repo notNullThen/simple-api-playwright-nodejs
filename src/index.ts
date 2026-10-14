@@ -11,6 +11,7 @@
 // Export public classes
 export { default as APIClient } from "./client";
 export { default as APIEndpointBase } from "./endpoint-base";
+export { default as HeldApiResponse } from "./held-api-response";
 
 // Export public types
 export type { HttpMethod, RequestParameters } from "./client";

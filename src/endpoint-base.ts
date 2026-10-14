@@ -59,7 +59,7 @@ export default abstract class APIEndpointBase {
    *
    * @typeParam T The expected response body type.
    * @param params Request and response-matching configuration.
-   * @returns An action with `request()` and `wait()` methods.
+   * @returns An action with `request()`, `wait()`, and `hold()` methods.
    *
    * @example
    * ```typescript
@@ -108,6 +108,16 @@ export default abstract class APIEndpointBase {
           this.context as Page,
         );
       },
+
+      /** Holds the next matching browser response until it is released or disposed. */
+      hold: () => new APIClient(this.baseURL, params).hold(this.getPage()),
     };
+  }
+
+  private getPage(): Page {
+    if (!("goto" in this.context)) {
+      throw new Error("You can use hold() only in UI tests with a Page context.");
+    }
+    return this.context;
   }
 }
